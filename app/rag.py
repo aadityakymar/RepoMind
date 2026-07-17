@@ -1,10 +1,10 @@
-﻿import os
+import os
 from typing import Optional
 
 # pyrefly: ignore [missing-import]
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings, HuggingFaceEndpointEmbeddings
 from langchain_chroma import Chroma
 
 # ---------------------------------------------------------------------------
@@ -44,15 +44,21 @@ class VectorStoreManager:
         self._repo_path: Optional[str] = None      # NEW: track repo path
         self._metadata: dict = {}                  # NEW: cached metadata
 
-        # Using a free, local embedding model â€” no API key required
-        # Downloads ~90MB once and caches it locally
-        print("[*] Loading embedding model (MiniLM-L6-v2)... ", end="", flush=True)
-        self._embeddings = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/all-MiniLM-L6-v2",
-            model_kwargs={"device": "cpu"},
-            encode_kwargs={"normalize_embeddings": True}
-        )
-        print("done.")
+        hf_token = os.environ.get("Hf_token")
+        if hf_token:
+            print("[*] Loading HuggingFace Endpoint Embeddings (API) to save RAM...")
+            self._embeddings = HuggingFaceEndpointEmbeddings(
+                model="sentence-transformers/all-MiniLM-L6-v2",
+                huggingfacehub_api_token=hf_token
+            )
+        else:
+            print("[*] Loading local embedding model (MiniLM-L6-v2)... ", end="", flush=True)
+            self._embeddings = HuggingFaceEmbeddings(
+                model_name="sentence-transformers/all-MiniLM-L6-v2",
+                model_kwargs={"device": "cpu"},
+                encode_kwargs={"normalize_embeddings": True}
+            )
+            print("done.")
 
     def is_indexed(self) -> bool:
         """Returns True if a repository is currently indexed."""
