@@ -1,0 +1,52 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# docker-compose.yml — Local docker-based deployment
+#
+# Usage:
+#   1. Copy .env.example to .env and fill in real values.
+#   2. docker compose up --build
+#   3. Open http://localhost:8501 in your browser.
+# ─────────────────────────────────────────────────────────────────────────────
+version: "3.9"
+
+services:
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    env_file: .env
+    environment:
+      # Override API_BASE so the frontend can reach the backend by service name
+      CORS_ORIGINS: "http://localhost:8501,http://frontend:8501"
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist Chroma vector DB and cloned repos across container restarts
+      - chroma_data:/app/chroma_db
+      - repo_data:/app/repos
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s   # allow time for the embedding model to load
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    env_file: .env
+    environment:
+      # Point frontend at the backend container
+      API_BASE: "http://backend:8000"
+    ports:
+      - "8501:8501"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  chroma_data:
+  repo_data:

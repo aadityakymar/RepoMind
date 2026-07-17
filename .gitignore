@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+/venv/
+/.venv/
+
+# Environment / secrets  ← NEVER commit these
+.env
+*.env
+
+# Cloned repositories (can be re-cloned)
+/repos/
+
+# Local databases (replaced by Postgres in production)
+*.db
+*.sqlite
+*.sqlite3
+
+# Chroma vector store (persisted via Docker volume in production)
+/chroma_db/
+/app/chroma_db/
+
+# Streamlit cache
+.streamlit/
+
+# Docker
+*.tar
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
